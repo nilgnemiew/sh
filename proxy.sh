@@ -61,12 +61,13 @@ check_port() {
 
 ### 安装配置
 install_all() {
-  read -p "Hysteria2 端口 [443]: " HY_PORT
-  read -p "VLESS Reality 端口 [8443]: " VL_PORT
-  read -p "Reality 伪装域名（如 www.cloudflare.com）: " DOMAIN
+  read -p "Hysteria2 端口 [默认 443]: " HY_PORT
+  read -p "VLESS Reality 端口 [默认 8443]: " VL_PORT
+  read -p "Reality 伪装域名（默认 www.cloudflare.com）: " DOMAIN
 
   HY_PORT=${HY_PORT:-443}
   VL_PORT=${VL_PORT:-8443}
+  DOMAIN=${DOMAIN:-www.cloudflare.com}
 
   check_port $HY_PORT || { echo "端口 $HY_PORT 被占用"; return; }
   check_port $VL_PORT || { echo "端口 $VL_PORT 被占用"; return; }
@@ -145,6 +146,16 @@ EOF
   show_nodes
 }
 
+### 获取节点地区
+get_ip_region() {
+  local region
+  region=$(curl -s --max-time 3 https://ip.sb/country_code)
+  if [[ -z "$region" || ${#region} -ne 2 ]]; then
+    region="UN"
+  fi
+  echo "$region"
+}
+
 ### 修改端口
 change_port() {
   OLD_HY=$(jq '.inbounds[]|select(.tag=="hy2")|.listen_port' $SB_CONFIG)
@@ -171,17 +182,28 @@ change_port() {
 ### 输出节点
 show_nodes() {
   IP=$(curl -s ipv4.ip.sb)
+  REGION=$(get_ip_region)
+
   HY_PORT=$(jq '.inbounds[]|select(.tag=="hy2")|.listen_port' $SB_CONFIG)
   VL_PORT=$(jq '.inbounds[]|select(.tag=="reality")|.listen_port' $SB_CONFIG)
+
   PASS=$(jq -r '.inbounds[]|select(.tag=="hy2")|.users[0].password' $SB_CONFIG)
   UUID=$(jq -r '.inbounds[]|select(.tag=="reality")|.users[0].uuid' $SB_CONFIG)
+
   DOMAIN=$(jq -r '.inbounds[]|select(.tag=="reality")|.tls.server_name' $SB_CONFIG)
   PUB_KEY=$(awk '/PublicKey/ {print $2}' "$KEY_FILE")
 
-  echo -e "\n===== 节点信息 ====="
-  echo "hy2://$PASS@$IP:$HY_PORT/?insecure=1&alpn=h3#HY2"
   echo
-  echo "vless://$UUID@$IP:$VL_PORT?encryption=none&flow=xtls-rprx-vision&security=reality&sni=$DOMAIN&fp=chrome&pbk=$PUB_KEY&sid=abcd1234&type=tcp#Reality"
+  echo "===== 节点信息 ====="
+  echo
+
+  echo "Hysteria2："
+  echo "hy2://$PASS@$IP:$HY_PORT/?insecure=1&alpn=h3#${REGION}-HY2"
+  echo
+
+  echo "VLESS Reality："
+  echo "vless://$UUID@$IP:$VL_PORT?encryption=none&flow=xtls-rprx-vision&security=reality&sni=$DOMAIN&fp=chrome&pbk=$PUB_KEY&sid=abcd1234&type=tcp#${REGION}-Reality"
+  echo
 }
 
 ### 菜单
