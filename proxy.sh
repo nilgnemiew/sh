@@ -63,11 +63,11 @@ check_port() {
 install_all() {
   read -p "Hysteria2 端口 [默认 443]: " HY_PORT
   read -p "VLESS Reality 端口 [默认 8443]: " VL_PORT
-  read -p "Reality 伪装域名（默认 www.cloudflare.com）: " DOMAIN
+  read -p "Reality 伪装域名（默认 www.lovelive-anime.jp）: " DOMAIN
 
   HY_PORT=${HY_PORT:-443}
   VL_PORT=${VL_PORT:-8443}
-  DOMAIN=${DOMAIN:-www.cloudflare.com}
+  DOMAIN=${DOMAIN:-www.lovelive-anime.jp}
 
   check_port $HY_PORT || { echo "端口 $HY_PORT 被占用"; return; }
   check_port $VL_PORT || { echo "端口 $VL_PORT 被占用"; return; }
