@@ -149,7 +149,7 @@ EOF
 ### 获取节点地区
 get_ip_region() {
   local region
-  region=$(curl -s --max-time 3 https://ip.sb/country_code)
+  region=$(curl -s --max-time 3 https://ipinfo.io/country)
   if [[ -z "$region" || ${#region} -ne 2 ]]; then
     region="UN"
   fi
