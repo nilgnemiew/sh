@@ -185,11 +185,11 @@ show_nodes() {
   echo
 }
 
-### 菜单 (略，同之前)
+### 菜单
 menu() {
   clear
-  echo "========== sing-box 管理面板 (ISP 识别版) =========="
-  echo "1. 安装 / 重装 (默认 SNI: Microsoft)"
+  echo "========== sing-box 管理面板 =========="
+  echo "1. 安装"
   echo "2. 查看节点信息"
   echo "3. 运行状态"
   echo "4. 实时日志"
