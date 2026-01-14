@@ -150,6 +150,103 @@ EOF
   show_nodes
 }
 
+### 修改配置（新增）
+modify_config() {
+  [ -f "$SB_CONFIG" ] || { echo -e "${RED}未检测到配置文件，请先安装${NC}"; return; }
+
+  # 读取当前配置
+  HY_CUR=$(jq '.inbounds[]|select(.tag=="hy2")|.listen_port' $SB_CONFIG)
+  VL_CUR=$(jq '.inbounds[]|select(.tag=="reality")|.listen_port' $SB_CONFIG)
+  DOMAIN_CUR=$(jq -r '.inbounds[]|select(.tag=="reality")|.tls.server_name' $SB_CONFIG)
+  PASS_CUR=$(jq -r '.inbounds[]|select(.tag=="hy2")|.users[0].password' $SB_CONFIG)
+  UUID_CUR=$(jq -r '.inbounds[]|select(.tag=="reality")|.users[0].uuid' $SB_CONFIG)
+  SID_CUR=$(jq -r '.inbounds[]|select(.tag=="reality")|.tls.reality.short_id[0]' $SB_CONFIG)
+  [ -f "$KEY_FILE" ] || gen_reality_key
+  PRIV_KEY=$(awk '/PrivateKey/ {print $2}' "$KEY_FILE")
+
+  echo
+  echo -e "${GREEN}当前配置:${NC}"
+  echo "Hysteria2 端口: $HY_CUR"
+  echo "VLESS Reality 端口: $VL_CUR"
+  echo "Reality 伪装域名 (SNI): $DOMAIN_CUR"
+  echo "Hysteria2 密码: $PASS_CUR"
+  echo "VLESS UUID: $UUID_CUR"
+  echo
+
+  read -p "是否直接使用编辑器 (nano) 修改配置文件? [y/N]: " use_editor
+  if [[ "$use_editor" =~ ^[Yy]$ ]]; then
+    ${EDITOR:-nano} "$SB_CONFIG"
+    systemctl restart sing-box
+    echo -e "${GREEN}配置已保存并重启服务${NC}"
+    show_nodes
+    return
+  fi
+
+  # 交互式修改（保留关键字段）
+  read -p "Hysteria2 端口 [默认 $HY_CUR]: " NEW_HY
+  read -p "VLESS Reality 端口 [默认 $VL_CUR]: " NEW_VL
+  read -p "Reality 伪装域名 (SNI) [默认 $DOMAIN_CUR]: " NEW_DOMAIN
+
+  NEW_HY=${NEW_HY:-$HY_CUR}
+  NEW_VL=${NEW_VL:-$VL_CUR}
+  NEW_DOMAIN=${NEW_DOMAIN:-$DOMAIN_CUR}
+
+  # 如果更改端口，则检查端口占用（允许当前端口）
+  if [ "$NEW_HY" != "$HY_CUR" ]; then
+    check_port $NEW_HY || { echo -e "${RED}端口 $NEW_HY 被占用${NC}"; return; }
+  fi
+  if [ "$NEW_VL" != "$VL_CUR" ]; then
+    check_port $NEW_VL || { echo -e "${RED}端口 $NEW_VL 被占用${NC}"; return; }
+  fi
+
+  # 重新生成配置文件（保留原有 PASS/UUID/SID/PRIV_KEY）
+  cat > "$SB_CONFIG" <<EOF
+{
+  "log": { "level": "info" },
+  "inbounds": [
+    {
+      "type": "hysteria2",
+      "tag": "hy2",
+      "listen": "::",
+      "listen_port": $NEW_HY,
+      "users": [{ "password": "$PASS_CUR" }],
+      "tls": {
+        "enabled": true,
+        "alpn": ["h3"],
+        "certificate_path": "$CERT_DIR/server.crt",
+        "key_path": "$CERT_DIR/server.key"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "reality",
+      "listen": "::",
+      "listen_port": $NEW_VL,
+      "users": [{
+        "uuid": "$UUID_CUR",
+        "flow": "xtls-rprx-vision"
+      }],
+      "tls": {
+        "enabled": true,
+        "server_name": "$NEW_DOMAIN",
+        "reality": {
+          "enabled": true,
+          "handshake": { "server": "$NEW_DOMAIN", "server_port": 443 },
+          "private_key": "$PRIV_KEY",
+          "short_id": ["$SID_CUR"]
+        }
+      }
+    }
+  ],
+  "outbounds": [{ "type": "direct" }]
+}
+EOF
+
+  systemctl restart sing-box
+  echo -e "${GREEN}配置已更新并重启服务${NC}"
+  show_nodes
+}
+
 ### 获取地区和服务商
 get_info() {
   # --connect-timeout 限制连接时间，--retry 失败自动重试 2 次
@@ -195,17 +292,20 @@ menu() {
   echo "4. 实时日志"
   echo "5. 重启服务"
   echo "6. 彻底卸载"
+  echo "7. 修改配置"
   echo "0. 退出"
-  read -p "请选择 [0-6]: " num
+  read -p "请选择 [0-7]: " num
 
   case $num in
     1) install_deps; install_singbox; enable_bbr; install_all ;;
-    2) [ -f "$SB_CONFIG" ] && show_nodes || echo "请先安装";;
+    2) [ -f "$SB_CONFIG" ] && show_nodes || echo "请先安装" ;;
     3) systemctl status sing-box ;;
     4) journalctl -u sing-box -f ;;
     5) systemctl restart sing-box ;;
-    6) systemctl stop sing-box; rm -rf $SB_DIR $SERVICE_FILE; echo "已卸载";;
+    6) systemctl stop sing-box; rm -rf $SB_DIR $SERVICE_FILE; echo "已卸载" ;;
+    7) modify_config ;;
     0) exit ;;
+    *) echo "无效选择" ;;
   esac
 }
 
