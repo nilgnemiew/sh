@@ -63,11 +63,20 @@ check_port() {
 install_all() {
   read -p "Hysteria2 端口 [默认 443]: " HY_PORT
   read -p "VLESS Reality 端口 [默认 8443]: " VL_PORT
-  read -p "Reality 伪装域名（默认 www.lovelive-anime.jp）: " DOMAIN
 
   HY_PORT=${HY_PORT:-443}
   VL_PORT=${VL_PORT:-8443}
-  DOMAIN=${DOMAIN:-www.lovelive-anime.jp}
+
+  # 选择伪装域名：提供两个选项，回车默认选择第 2 项（www.lovelive-anime.jp）
+  echo "选择 Reality 伪装域名："
+  echo "1) www.microsoft.com"
+  echo "2) www.lovelive-anime.jp (默认)"
+  read -p "输入 1 或 2（回车默认 2），或直接输入自定义域名: " dchoice
+  case "$dchoice" in
+    1) DOMAIN="www.microsoft.com" ;;
+    2|"") DOMAIN="www.lovelive-anime.jp" ;;
+    *) DOMAIN="$dchoice" ;; # 如果输入其他值，则当作自定义域名
+  esac
 
   check_port $HY_PORT || { echo "端口 $HY_PORT 被占用"; return; }
   check_port $VL_PORT || { echo "端口 $VL_PORT 被占用"; return; }
@@ -175,7 +184,7 @@ change_port() {
     jq ".inbounds |= map(if .tag==\"reality\" then .listen_port=$NV else . end)" \
     $SB_CONFIG > /tmp/sb && mv /tmp/sb $SB_CONFIG
 
-  systemctl restart sing-box
+  systemctl.restart sing-box
   show_nodes
 }
 
