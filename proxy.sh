@@ -18,8 +18,10 @@ check_root() {
 
 ### 安装依赖
 install_deps() {
-  command -v jq >/dev/null || (apt install -y jq || yum install -y jq)
-  command -v curl >/dev/null || (apt install -y curl || yum install -y curl)
+  echo -e "${GREEN}正在安装依赖...${NC}"
+  command -v jq >/dev/null || (apt update && apt install -y jq || yum install -y jq)
+  command -v curl >/dev/null || (apt update && apt install -y curl || yum install -y curl)
+  command -v openssl >/dev/null || (apt update && apt install -y openssl || yum install -y openssl)
 }
 
 ### 安装 sing-box
@@ -47,7 +49,7 @@ gen_cert() {
     -subj "/C=US/O=SingBox/CN=SingBox"
 }
 
-### 生成 Reality 密钥（只生成一次）
+### 生成 Reality 密钥
 gen_reality_key() {
   if [ ! -f "$KEY_FILE" ]; then
     sing-box generate reality-keypair > "$KEY_FILE"
@@ -67,29 +69,23 @@ install_all() {
   HY_PORT=${HY_PORT:-443}
   VL_PORT=${VL_PORT:-8443}
 
-  # 选择伪装域名：提供两个选项，回车默认选择第 2 项（www.lovelive-anime.jp）
-  echo "选择 Reality 伪装域名："
-  echo "1) www.microsoft.com"
-  echo "2) www.lovelive-anime.jp (默认)"
-  read -p "输入 1 或 2（回车默认 2），或直接输入自定义域名: " dchoice
-  case "$dchoice" in
-    1) DOMAIN="www.microsoft.com" ;;
-    2|"") DOMAIN="www.lovelive-anime.jp" ;;
-    *) DOMAIN="$dchoice" ;; # 如果输入其他值，则当作自定义域名
-  esac
+  echo -e "\n${GREEN}设置 Reality 伪装域名 (SNI):${NC}"
+  read -p "请输入域名 (直接回车默认使用 www.microsoft.com): " INPUT_DOMAIN
+  DOMAIN=${INPUT_DOMAIN:-www.microsoft.com}
 
-  check_port $HY_PORT || { echo "端口 $HY_PORT 被占用"; return; }
-  check_port $VL_PORT || { echo "端口 $VL_PORT 被占用"; return; }
+  check_port $HY_PORT || { echo -e "${RED}端口 $HY_PORT 被占用${NC}"; return; }
+  check_port $VL_PORT || { echo -e "${RED}端口 $VL_PORT 被占用${NC}"; return; }
 
   UUID=$(sing-box generate uuid)
   PASS=$(openssl rand -hex 8)
+  SID=$(openssl rand -hex 4) 
 
   gen_cert
   gen_reality_key
 
   PRIV_KEY=$(awk '/PrivateKey/ {print $2}' "$KEY_FILE")
 
-mkdir -p "$SB_DIR"
+  mkdir -p "$SB_DIR"
 
 cat > "$SB_CONFIG" <<EOF
 {
@@ -124,7 +120,7 @@ cat > "$SB_CONFIG" <<EOF
           "enabled": true,
           "handshake": { "server": "$DOMAIN", "server_port": 443 },
           "private_key": "$PRIV_KEY",
-          "short_id": ["abcd1234"]
+          "short_id": ["$SID"]
         }
       }
     }
@@ -135,7 +131,7 @@ EOF
 
 cat > "$SERVICE_FILE" <<EOF
 [Unit]
-Description=sing-box
+Description=sing-box service
 After=network.target
 
 [Service]
@@ -147,7 +143,6 @@ LimitNOFILE=51200
 WantedBy=multi-user.target
 EOF
 
-  systemctl daemon-reexec
   systemctl daemon-reload
   systemctl enable sing-box
   systemctl restart sing-box
@@ -155,43 +150,19 @@ EOF
   show_nodes
 }
 
-### 获取节点地区
-get_ip_region() {
-  local region
-  region=$(curl -s --max-time 3 https://ipinfo.io/country)
-  if [[ -z "$region" || ${#region} -ne 2 ]]; then
-    region="UN"
-  fi
-  echo "$region"
-}
-
-### 修改端口
-change_port() {
-  OLD_HY=$(jq '.inbounds[]|select(.tag=="hy2")|.listen_port' $SB_CONFIG)
-  OLD_VL=$(jq '.inbounds[]|select(.tag=="reality")|.listen_port' $SB_CONFIG)
-
-  echo "当前 Hysteria2 端口: $OLD_HY"
-  echo "当前 VLESS Reality 端口: $OLD_VL"
-
-  read -p "新 Hysteria2 端口（回车不改）: " NH
-  read -p "新 VLESS 端口（回车不改）: " NV
-
-  [ -n "$NH" ] && check_port $NH && \
-    jq ".inbounds |= map(if .tag==\"hy2\" then .listen_port=$NH else . end)" \
-    $SB_CONFIG > /tmp/sb && mv /tmp/sb $SB_CONFIG
-
-  [ -n "$NV" ] && check_port $NV && \
-    jq ".inbounds |= map(if .tag==\"reality\" then .listen_port=$NV else . end)" \
-    $SB_CONFIG > /tmp/sb && mv /tmp/sb $SB_CONFIG
-
-  systemctl.restart sing-box
-  show_nodes
+### 获取地区和服务商
+get_info() {
+  # --connect-timeout 限制连接时间，--retry 失败自动重试 2 次
+  local info=$(curl -s --connect-timeout 5 --retry 2 http://ip-api.com/json/?fields=countryCode,isp)
+  
+  REGION=$(echo "$info" | jq -r '.countryCode // "UN"')
+  ISP=$(echo "$info" | jq -r '.isp // "Unknown"' | tr ' ' '_')
 }
 
 ### 输出节点
 show_nodes() {
   IP=$(curl -s ipv4.ip.sb)
-  REGION=$(get_ip_region)
+  get_info # 获取最新的地区和 ISP 信息
 
   HY_PORT=$(jq '.inbounds[]|select(.tag=="hy2")|.listen_port' $SB_CONFIG)
   VL_PORT=$(jq '.inbounds[]|select(.tag=="reality")|.listen_port' $SB_CONFIG)
@@ -200,43 +171,40 @@ show_nodes() {
   UUID=$(jq -r '.inbounds[]|select(.tag=="reality")|.users[0].uuid' $SB_CONFIG)
 
   DOMAIN=$(jq -r '.inbounds[]|select(.tag=="reality")|.tls.server_name' $SB_CONFIG)
+  SID=$(jq -r '.inbounds[]|select(.tag=="reality")|.tls.reality.short_id[0]' $SB_CONFIG)
   PUB_KEY=$(awk '/PublicKey/ {print $2}' "$KEY_FILE")
 
   echo
-  echo "===== 节点信息 ====="
+  echo -e "${GREEN}===== 节点配置已生成 =====${NC}"
   echo
-
-  echo "Hysteria2："
-  echo "hy2://$PASS@$IP:$HY_PORT/?insecure=1&alpn=h3#${REGION}-HY2"
+  echo -e "Hysteria2 (高速模式):"
+  echo "hy2://$PASS@$IP:$HY_PORT/?insecure=1&alpn=h3#${REGION}-${ISP}"
   echo
-
-  echo "VLESS Reality："
-  echo "vless://$UUID@$IP:$VL_PORT?encryption=none&flow=xtls-rprx-vision&security=reality&sni=$DOMAIN&fp=chrome&pbk=$PUB_KEY&sid=abcd1234&type=tcp#${REGION}-Reality"
+  echo -e "VLESS Reality (稳健模式):"
+  echo "vless://$UUID@$IP:$VL_PORT?encryption=none&flow=xtls-rprx-vision&security=reality&sni=$DOMAIN&fp=chrome&pbk=$PUB_KEY&sid=$SID&type=tcp#${REGION}-${ISP}"
   echo
 }
 
-### 菜单
+### 菜单 (略，同之前)
 menu() {
   clear
-  echo "========== sing-box 面板 =========="
-  echo "1. 安装 / 重装（含 BBR）"
-  echo "2. 查看节点"
-  echo "3. 修改端口"
-  echo "4. 查看状态"
-  echo "5. 查看日志"
-  echo "6. 重启服务"
-  echo "7. 卸载"
+  echo "========== sing-box 管理面板 (ISP 识别版) =========="
+  echo "1. 安装 / 重装 (默认 SNI: Microsoft)"
+  echo "2. 查看节点信息"
+  echo "3. 运行状态"
+  echo "4. 实时日志"
+  echo "5. 重启服务"
+  echo "6. 彻底卸载"
   echo "0. 退出"
-  read -p "选择: " num
+  read -p "请选择 [0-6]: " num
 
   case $num in
     1) install_deps; install_singbox; enable_bbr; install_all ;;
-    2) show_nodes ;;
-    3) change_port ;;
-    4) systemctl status sing-box ;;
-    5) journalctl -u sing-box -f ;;
-    6) systemctl restart sing-box ;;
-    7) systemctl stop sing-box; rm -rf $SB_DIR $SERVICE_FILE ;;
+    2) [ -f "$SB_CONFIG" ] && show_nodes || echo "请先安装";;
+    3) systemctl status sing-box ;;
+    4) journalctl -u sing-box -f ;;
+    5) systemctl restart sing-box ;;
+    6) systemctl stop sing-box; rm -rf $SB_DIR $SERVICE_FILE; echo "已卸载";;
     0) exit ;;
   esac
 }
