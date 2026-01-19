@@ -3,7 +3,7 @@
 ### 基础路径
 SB_DIR="/etc/sing-box"
 CERT_DIR="$SB_DIR/cert"
-SB_CONFIG="$SB_DIR/config. json"
+SB_CONFIG="$SB_DIR/config.json"
 KEY_FILE="$SB_DIR/reality.key"
 SERVICE_FILE="/etc/systemd/system/sing-box.service"
 
@@ -90,11 +90,11 @@ install_all() {
 cat > "$SB_CONFIG" <<EOF
 {
   "log": { "level": "info" },
-  "inbounds":  [
+  "inbounds": [
     {
       "type": "hysteria2",
       "tag": "hy2",
-      "listen":  "::",
+      "listen": "::",
       "listen_port": $HY_PORT,
       "users": [{ "password": "$PASS" }],
       "tls": {
@@ -116,7 +116,7 @@ cat > "$SB_CONFIG" <<EOF
       "tls": {
         "enabled": true,
         "server_name": "$DOMAIN",
-        "reality":  {
+        "reality": {
           "enabled": true,
           "handshake": { "server": "$DOMAIN", "server_port": 443 },
           "private_key": "$PRIV_KEY",
@@ -150,13 +150,13 @@ EOF
   show_nodes
 }
 
-### 修改配置
+### 修改配置（新增）
 modify_config() {
   [ -f "$SB_CONFIG" ] || { echo -e "${RED}未检测到配置文件，请先安装${NC}"; return; }
 
   # 读取当前配置
-  HY_CUR=$(jq '. inbounds[]|select(.tag=="hy2")|.listen_port' $SB_CONFIG)
-  VL_CUR=$(jq '. inbounds[]|select(.tag=="reality")|.listen_port' $SB_CONFIG)
+  HY_CUR=$(jq '.inbounds[]|select(.tag=="hy2")|.listen_port' $SB_CONFIG)
+  VL_CUR=$(jq '.inbounds[]|select(.tag=="reality")|.listen_port' $SB_CONFIG)
   DOMAIN_CUR=$(jq -r '.inbounds[]|select(.tag=="reality")|.tls.server_name' $SB_CONFIG)
   PASS_CUR=$(jq -r '.inbounds[]|select(.tag=="hy2")|.users[0].password' $SB_CONFIG)
   UUID_CUR=$(jq -r '.inbounds[]|select(.tag=="reality")|.users[0].uuid' $SB_CONFIG)
@@ -184,7 +184,7 @@ modify_config() {
 
   # 交互式修改（保留关键字段）
   read -p "Hysteria2 端口 [默认 $HY_CUR]: " NEW_HY
-  read -p "VLESS Reality 端口 [默认 $VL_CUR]:  " NEW_VL
+  read -p "VLESS Reality 端口 [默认 $VL_CUR]: " NEW_VL
   read -p "Reality 伪装域名 (SNI) [默认 $DOMAIN_CUR]: " NEW_DOMAIN
 
   NEW_HY=${NEW_HY:-$HY_CUR}
@@ -203,7 +203,7 @@ modify_config() {
   cat > "$SB_CONFIG" <<EOF
 {
   "log": { "level": "info" },
-  "inbounds":  [
+  "inbounds": [
     {
       "type": "hysteria2",
       "tag": "hy2",
@@ -224,21 +224,21 @@ modify_config() {
       "listen_port": $NEW_VL,
       "users": [{
         "uuid": "$UUID_CUR",
-        "flow":  "xtls-rprx-vision"
+        "flow": "xtls-rprx-vision"
       }],
       "tls": {
         "enabled": true,
         "server_name": "$NEW_DOMAIN",
         "reality": {
           "enabled": true,
-          "handshake":  { "server": "$NEW_DOMAIN", "server_port": 443 },
+          "handshake": { "server": "$NEW_DOMAIN", "server_port": 443 },
           "private_key": "$PRIV_KEY",
-          "short_id":  ["$SID_CUR"]
+          "short_id": ["$SID_CUR"]
         }
       }
     }
   ],
-  "outbounds": [{ "type":  "direct" }]
+  "outbounds": [{ "type": "direct" }]
 }
 EOF
 
@@ -250,7 +250,7 @@ EOF
 ### 获取地区和服务商
 get_info() {
   # --connect-timeout 限制连接时间，--retry 失败自动重试 2 次
-  local info=$(curl -s --connect-timeout 5 --retry 2 http://ip-api.com/json/? fields=countryCode,isp)
+  local info=$(curl -s --connect-timeout 5 --retry 2 http://ip-api.com/json/?fields=countryCode,isp)
   
   REGION=$(echo "$info" | jq -r '.countryCode // "UN"')
   ISP=$(echo "$info" | jq -r '.isp // "Unknown"' | tr ' ' '_')
@@ -278,87 +278,35 @@ show_nodes() {
   echo "hy2://$PASS@$IP:$HY_PORT/?insecure=1&alpn=h3#${REGION}-${ISP}"
   echo
   echo -e "VLESS Reality (稳健模式):"
-  echo "vless://$UUID@$IP:$VL_PORT? encryption=none&flow=xtls-rprx-vision&security=reality&sni=$DOMAIN&fp=chrome&pbk=$PUB_KEY&sid=$SID&type=tcp#${REGION}-${ISP}"
-  echo
-}
-
-### 返回菜单提示
-press_any_key() {
-  echo
-  read -n 1 -s -r -p "按任意键返回菜单..."
+  echo "vless://$UUID@$IP:$VL_PORT?encryption=none&flow=xtls-rprx-vision&security=reality&sni=$DOMAIN&fp=chrome&pbk=$PUB_KEY&sid=$SID&type=tcp#${REGION}-${ISP}"
   echo
 }
 
 ### 菜单
 menu() {
-  while true; do
-    clear
-    echo "========== sing-box 管理面板 =========="
-    echo "1. 安装"
-    echo "2. 查看节点信息"
-    echo "3. 运行状态"
-    echo "4. 实时日志"
-    echo "5. 重启服务"
-    echo "6. 彻底卸载"
-    echo "7. 修改配置"
-    echo "0. 退出"
-    read -p "请选择 [0-7]: " num
+  clear
+  echo "========== sing-box 管理面板 =========="
+  echo "1. 安装"
+  echo "2. 查看节点信息"
+  echo "3. 运行状态"
+  echo "4. 实时日志"
+  echo "5. 重启服务"
+  echo "6. 彻底卸载"
+  echo "7. 修改配置"
+  echo "0. 退出"
+  read -p "请选择 [0-7]: " num
 
-    case $num in
-      1) 
-        install_deps
-        install_singbox
-        enable_bbr
-        install_all
-        press_any_key
-        ;;
-      2) 
-        if [ -f "$SB_CONFIG" ]; then
-          show_nodes
-        else
-          echo -e "${RED}请先安装${NC}"
-        fi
-        press_any_key
-        ;;
-      3) 
-        systemctl status sing-box
-        press_any_key
-        ;;
-      4) 
-        echo -e "${GREEN}按 Ctrl+C 返回菜单${NC}"
-        journalctl -u sing-box -f
-        ;;
-      5) 
-        systemctl restart sing-box
-        echo -e "${GREEN}服务已重启${NC}"
-        press_any_key
-        ;;
-      6) 
-        read -p "确认彻底卸载?  [y/N]: " confirm
-        if [[ "$confirm" =~ ^[Yy]$ ]]; then
-          systemctl stop sing-box
-          systemctl disable sing-box 2>/dev/null
-          rm -rf $SB_DIR $SERVICE_FILE
-          echo -e "${GREEN}已卸载${NC}"
-        else
-          echo -e "${RED}已取消${NC}"
-        fi
-        press_any_key
-        ;;
-      7) 
-        modify_config
-        press_any_key
-        ;;
-      0) 
-        echo -e "${GREEN}退出脚本${NC}"
-        exit 0
-        ;;
-      *) 
-        echo -e "${RED}无效选择${NC}"
-        press_any_key
-        ;;
-    esac
-  done
+  case $num in
+    1) install_deps; install_singbox; enable_bbr; install_all ;;
+    2) [ -f "$SB_CONFIG" ] && show_nodes || echo "请先安装" ;;
+    3) systemctl status sing-box ;;
+    4) journalctl -u sing-box -f ;;
+    5) systemctl restart sing-box ;;
+    6) systemctl stop sing-box; rm -rf $SB_DIR $SERVICE_FILE; echo "已卸载" ;;
+    7) modify_config ;;
+    0) exit ;;
+    *) echo "无效选择" ;;
+  esac
 }
 
 check_root
