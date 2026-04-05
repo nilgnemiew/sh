@@ -1,81 +1,81 @@
 # AI 规则集 - 非中国大陆主流 AI 服务域名列表
-# 格式：DOMAIN-SUFFIX,域名,🤖 AI
+# 格式：DOMAIN-SUFFIX,域名
 # 基于 v2fly category-ai-!cn 展开，覆盖 Grok、OpenAI、Claude、Gemini、Groq、Perplexity 等
 
-DOMAIN-SUFFIX,anthropic.com,🤖 AI
-DOMAIN-SUFFIX,claude.ai,🤖 AI
-DOMAIN-SUFFIX,claudeusercontent.com,🤖 AI
-DOMAIN-SUFFIX,api.anthropic.com,🤖 AI
+DOMAIN-SUFFIX,anthropic.com
+DOMAIN-SUFFIX,claude.ai
+DOMAIN-SUFFIX,claudeusercontent.com
+DOMAIN-SUFFIX,api.anthropic.com
 
-DOMAIN-SUFFIX,openai.com,🤖 AI
-DOMAIN-SUFFIX,chat.openai.com,🤖 AI
-DOMAIN-SUFFIX,api.openai.com,🤖 AI
-DOMAIN-SUFFIX,platform.openai.com,🤖 AI
-DOMAIN-SUFFIX,chatgpt.com,🤖 AI
-DOMAIN-SUFFIX,cdn.openai.com,🤖 AI
-DOMAIN-SUFFIX,auth.openai.com,🤖 AI
-DOMAIN-SUFFIX,files.oaiusercontent.com,🤖 AI
+DOMAIN-SUFFIX,openai.com
+DOMAIN-SUFFIX,chat.openai.com
+DOMAIN-SUFFIX,api.openai.com
+DOMAIN-SUFFIX,platform.openai.com
+DOMAIN-SUFFIX,chatgpt.com
+DOMAIN-SUFFIX,cdn.openai.com
+DOMAIN-SUFFIX,auth.openai.com
+DOMAIN-SUFFIX,files.oaiusercontent.com
 
-DOMAIN-SUFFIX,grok.com,🤖 AI
-DOMAIN-SUFFIX,grok.x.ai,🤖 AI
-DOMAIN-SUFFIX,x.ai,🤖 AI
-DOMAIN-SUFFIX,api.x.ai,🤖 AI
+DOMAIN-SUFFIX,grok.com
+DOMAIN-SUFFIX,grok.x.ai
+DOMAIN-SUFFIX,x.ai
+DOMAIN-SUFFIX,api.x.ai
 
-DOMAIN-SUFFIX,groq.com,🤖 AI
-DOMAIN-SUFFIX,api.groq.com,🤖 AI
+DOMAIN-SUFFIX,groq.com
+DOMAIN-SUFFIX,api.groq.com
 
-DOMAIN-SUFFIX,perplexity.ai,🤖 AI
-DOMAIN-SUFFIX,api.perplexity.ai,🤖 AI
+DOMAIN-SUFFIX,perplexity.ai
+DOMAIN-SUFFIX,api.perplexity.ai
 
-DOMAIN-SUFFIX,mistral.ai,🤖 AI
-DOMAIN-SUFFIX,api.mistral.ai,🤖 AI
+DOMAIN-SUFFIX,mistral.ai
+DOMAIN-SUFFIX,api.mistral.ai
 
-DOMAIN-SUFFIX,meta.ai,🤖 AI
-DOMAIN-SUFFIX,cohere.ai,🤖 AI
-DOMAIN-SUFFIX,cohere.com,🤖 AI
-DOMAIN-SUFFIX,huggingface.co,🤖 AI
+DOMAIN-SUFFIX,meta.ai
+DOMAIN-SUFFIX,cohere.ai
+DOMAIN-SUFFIX,cohere.com
+DOMAIN-SUFFIX,huggingface.co
 
-DOMAIN-SUFFIX,copilot.microsoft.com,🤖 AI
-DOMAIN-SUFFIX,github.com,🤖 AI
-DOMAIN-SUFFIX,copilot.github.com,🤖 AI
+DOMAIN-SUFFIX,copilot.microsoft.com
+DOMAIN-SUFFIX,github.com
+DOMAIN-SUFFIX,copilot.github.com
 
-DOMAIN-SUFFIX,cursor.com,🤖 AI
-DOMAIN-SUFFIX,cursor.sh,🤖 AI
-DOMAIN-SUFFIX,poe.com,🤖 AI
-DOMAIN-SUFFIX,you.com,🤖 AI
+DOMAIN-SUFFIX,cursor.com
+DOMAIN-SUFFIX,cursor.sh
+DOMAIN-SUFFIX,poe.com
+DOMAIN-SUFFIX,you.com
 
-DOMAIN-SUFFIX,devin.ai,🤖 AI
-DOMAIN-SUFFIX,dify.ai,🤖 AI
-DOMAIN-SUFFIX,openrouter.ai,🤖 AI
-DOMAIN-SUFFIX,openart.ai,🤖 AI
-DOMAIN-SUFFIX,clipdrop.co,🤖 AI
-DOMAIN-SUFFIX,jasper.ai,🤖 AI
-DOMAIN-SUFFIX,coderabbit.ai,🤖 AI
-DOMAIN-SUFFIX,coderabbit.gallery.vsassets.io,🤖 AI
+DOMAIN-SUFFIX,devin.ai
+DOMAIN-SUFFIX,dify.ai
+DOMAIN-SUFFIX,openrouter.ai
+DOMAIN-SUFFIX,openart.ai
+DOMAIN-SUFFIX,clipdrop.co
+DOMAIN-SUFFIX,jasper.ai
+DOMAIN-SUFFIX,coderabbit.ai
+DOMAIN-SUFFIX,coderabbit.gallery.vsassets.io
 
-DOMAIN-SUFFIX,chutes.ai,🤖 AI
-DOMAIN-SUFFIX,clawhub.ai,🤖 AI
-DOMAIN-SUFFIX,diabrowser.com,🤖 AI
-DOMAIN-SUFFIX,diabrowser.engineering,🤖 AI
-DOMAIN-SUFFIX,duck.ai,🤖 AI
-DOMAIN-SUFFIX,h2o.ai,🤖 AI
-DOMAIN-SUFFIX,kiro.dev,🤖 AI
-DOMAIN-SUFFIX,lovart.ai,🤖 AI
-DOMAIN-SUFFIX,openclaw.ai,🤖 AI
-DOMAIN-SUFFIX,spicywriter.com,🤖 AI
-DOMAIN-SUFFIX,gateway.ai.cloudflare.com,🤖 AI
+DOMAIN-SUFFIX,chutes.ai
+DOMAIN-SUFFIX,clawhub.ai
+DOMAIN-SUFFIX,diabrowser.com
+DOMAIN-SUFFIX,diabrowser.engineering
+DOMAIN-SUFFIX,duck.ai
+DOMAIN-SUFFIX,h2o.ai
+DOMAIN-SUFFIX,kiro.dev
+DOMAIN-SUFFIX,lovart.ai
+DOMAIN-SUFFIX,openclaw.ai
+DOMAIN-SUFFIX,spicywriter.com
+DOMAIN-SUFFIX,gateway.ai.cloudflare.com
 
-DOMAIN-SUFFIX,gemini.google.com,🤖 AI
-DOMAIN-SUFFIX,aistudio.google.com,🤖 AI
-DOMAIN-SUFFIX,generativelanguage.googleapis.com,🤖 AI
+DOMAIN-SUFFIX,gemini.google.com
+DOMAIN-SUFFIX,aistudio.google.com
+DOMAIN-SUFFIX,generativelanguage.googleapis.com
 
-DOMAIN-SUFFIX,elevenlabs.io,🤖 AI
-DOMAIN-SUFFIX,liveperson.net,🤖 AI
-DOMAIN-SUFFIX,manus.ai,🤖 AI
-DOMAIN-SUFFIX,comfy.org,🤖 AI
-DOMAIN-SUFFIX,cerebras.ai,🤖 AI
-DOMAIN-SUFFIX,windsurf.com,🤖 AI
-DOMAIN-SUFFIX,youmind.ai,🤖 AI
+DOMAIN-SUFFIX,elevenlabs.io
+DOMAIN-SUFFIX,liveperson.net
+DOMAIN-SUFFIX,manus.ai
+DOMAIN-SUFFIX,comfy.org
+DOMAIN-SUFFIX,cerebras.ai
+DOMAIN-SUFFIX,windsurf.com
+DOMAIN-SUFFIX,youmind.ai
 
 # 额外常用 AI 相关域名（可根据需要增删）
-DOMAIN-SUFFIX,tcr9i.chat.openai.com,🤖 AI
+DOMAIN-SUFFIX,tcr9i.chat.openai.com
