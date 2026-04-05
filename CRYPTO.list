@@ -1,0 +1,71 @@
+# 交易所规则集 - 主流加密货币交易所域名列表
+# 格式：DOMAIN-SUFFIX,域名,💱 交易所
+# 覆盖 Binance、OKX、Bybit、Coinbase、Kraken、KuCoin、Gate.io 等主流平台
+
+# Binance 系列
+DOMAIN-SUFFIX,binance.com,💱 交易所
+DOMAIN-SUFFIX,binance.us,💱 交易所
+DOMAIN-SUFFIX,binance.me,💱 交易所
+DOMAIN-SUFFIX,binance.cloud,💱 交易所
+DOMAIN-SUFFIX,binancefuture.com,💱 交易所
+DOMAIN-SUFFIX,binance.org,💱 交易所
+DOMAIN-SUFFIX,binancebnb.com,💱 交易所
+DOMAIN-SUFFIX,binancecharity.org,💱 交易所
+DOMAIN-SUFFIX,www.binance.com,💱 交易所
+
+# OKX 系列
+DOMAIN-SUFFIX,okx.com,💱 交易所
+DOMAIN-SUFFIX,okex.com,💱 交易所
+DOMAIN-SUFFIX,okx.me,💱 交易所
+DOMAIN-SUFFIX,okcoin.com,💱 交易所
+DOMAIN-SUFFIX,okx.win,💱 交易所
+
+# Bybit 系列
+DOMAIN-SUFFIX,bybit.com,💱 交易所
+DOMAIN-SUFFIX,bybit.global,💱 交易所
+DOMAIN-SUFFIX,bybit.me,💱 交易所
+
+# Coinbase 系列
+DOMAIN-SUFFIX,coinbase.com,💱 交易所
+DOMAIN-SUFFIX,pro.coinbase.com,💱 交易所
+DOMAIN-SUFFIX,coinbasepro.com,💱 交易所
+DOMAIN-SUFFIX,coinbase.cloud,💱 交易所
+
+# Kraken
+DOMAIN-SUFFIX,kraken.com,💱 交易所
+
+# KuCoin
+DOMAIN-SUFFIX,kucoin.com,💱 交易所
+DOMAIN-SUFFIX,kucoin.plus,💱 交易所
+
+# Gate.io
+DOMAIN-SUFFIX,gate.io,💱 交易所
+DOMAIN-SUFFIX,gatecn.io,💱 交易所
+
+# 其他主流交易所
+DOMAIN-SUFFIX,huobi.com,💱 交易所
+DOMAIN-SUFFIX,htx.com,💱 交易所
+DOMAIN-SUFFIX,mexc.com,💱 交易所
+DOMAIN-SUFFIX,bitget.com,💱 交易所
+DOMAIN-SUFFIX,bitfinex.com,💱 交易所
+DOMAIN-SUFFIX,gemini.com,💱 交易所
+DOMAIN-SUFFIX,bitstamp.net,💱 交易所
+DOMAIN-SUFFIX,bitmart.com,💱 交易所
+DOMAIN-SUFFIX,ascendex.com,💱 交易所
+DOMAIN-SUFFIX,poloniex.com,💱 交易所
+DOMAIN-SUFFIX,bingx.com,💱 交易所
+DOMAIN-SUFFIX,xt.com,💱 交易所
+DOMAIN-SUFFIX,lbank.com,💱 交易所
+DOMAIN-SUFFIX,coinw.com,💱 交易所
+DOMAIN-SUFFIX,whitebit.com,💱 交易所
+DOMAIN-SUFFIX,bitrue.com,💱 交易所
+
+# 常用关键字补充（防止子域名遗漏）
+DOMAIN-KEYWORD,binance,💱 交易所
+DOMAIN-KEYWORD,okx,💱 交易所
+DOMAIN-KEYWORD,bybit,💱 交易所
+DOMAIN-KEYWORD,coinbase,💱 交易所
+DOMAIN-KEYWORD,kucoin,💱 交易所
+DOMAIN-KEYWORD,gate.io,💱 交易所
+
+# 规则结束
