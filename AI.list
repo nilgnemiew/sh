@@ -1,0 +1,79 @@
+# AI 规则集 - 非中国大陆主流 AI 服务域名列表
+# 适用于 Clash / Mihomo，直接作为 ruleset 使用
+# 包含 Grok、OpenAI、Claude、Gemini、Groq、Perplexity、Mistral 等
+
+# 核心 AI 平台
+anthropic.com
+claude.ai
+claudeusercontent.com
+openai.com
+chat.openai.com
+api.openai.com
+platform.openai.com
+chatgpt.com
+groq.com
+x.ai
+grok.com
+grok.x.ai
+api.x.ai
+perplexity.ai
+mistral.ai
+meta.ai
+cohere.ai
+cohere.com
+huggingface.co
+copilot.microsoft.com
+
+# 常用 AI 子域名与服务
+api.anthropic.com
+api.groq.com
+api.perplexity.ai
+api.mistral.ai
+cdn.openai.com
+auth.openai.com
+files.oaiusercontent.com
+tcr9i.chat.openai.com
+
+# 其他 AI 工具与平台
+cursor.com
+cursor.sh
+poe.com
+you.com
+devin.ai
+dify.ai
+openrouter.ai
+openart.ai
+clipdrop.co
+jasper.ai
+coderabbit.ai
+coderabbit.gallery.vsassets.io
+chutes.ai
+clawhub.ai
+diabrowser.com
+diabrowser.engineering
+duck.ai
+h2o.ai
+kiro.dev
+lovart.ai
+openclaw.ai
+spicywriter.com
+gateway.ai.cloudflare.com
+
+# Google / Gemini 相关
+gemini.google.com
+aistudio.google.com
+generativelanguage.googleapis.com
+
+# 补充常用 AI 域名
+github.com/copilot
+copilot.github.com
+windsurf.com
+elevenlabs.io
+liveperson.net
+manus.ai
+comfy.org
+cerebras.ai
+bytedance.ai
+youmind.ai
+
+# 规则结束
