@@ -1,79 +1,81 @@
 # AI 规则集 - 非中国大陆主流 AI 服务域名列表
-# 适用于 Clash / Mihomo，直接作为 ruleset 使用
-# 包含 Grok、OpenAI、Claude、Gemini、Groq、Perplexity、Mistral 等
+# 格式：DOMAIN-SUFFIX,域名,🤖 AI
+# 基于 v2fly category-ai-!cn 展开，覆盖 Grok、OpenAI、Claude、Gemini、Groq、Perplexity 等
 
-# 核心 AI 平台
-anthropic.com
-claude.ai
-claudeusercontent.com
-openai.com
-chat.openai.com
-api.openai.com
-platform.openai.com
-chatgpt.com
-groq.com
-x.ai
-grok.com
-grok.x.ai
-api.x.ai
-perplexity.ai
-mistral.ai
-meta.ai
-cohere.ai
-cohere.com
-huggingface.co
-copilot.microsoft.com
+DOMAIN-SUFFIX,anthropic.com,🤖 AI
+DOMAIN-SUFFIX,claude.ai,🤖 AI
+DOMAIN-SUFFIX,claudeusercontent.com,🤖 AI
+DOMAIN-SUFFIX,api.anthropic.com,🤖 AI
 
-# 常用 AI 子域名与服务
-api.anthropic.com
-api.groq.com
-api.perplexity.ai
-api.mistral.ai
-cdn.openai.com
-auth.openai.com
-files.oaiusercontent.com
-tcr9i.chat.openai.com
+DOMAIN-SUFFIX,openai.com,🤖 AI
+DOMAIN-SUFFIX,chat.openai.com,🤖 AI
+DOMAIN-SUFFIX,api.openai.com,🤖 AI
+DOMAIN-SUFFIX,platform.openai.com,🤖 AI
+DOMAIN-SUFFIX,chatgpt.com,🤖 AI
+DOMAIN-SUFFIX,cdn.openai.com,🤖 AI
+DOMAIN-SUFFIX,auth.openai.com,🤖 AI
+DOMAIN-SUFFIX,files.oaiusercontent.com,🤖 AI
 
-# 其他 AI 工具与平台
-cursor.com
-cursor.sh
-poe.com
-you.com
-devin.ai
-dify.ai
-openrouter.ai
-openart.ai
-clipdrop.co
-jasper.ai
-coderabbit.ai
-coderabbit.gallery.vsassets.io
-chutes.ai
-clawhub.ai
-diabrowser.com
-diabrowser.engineering
-duck.ai
-h2o.ai
-kiro.dev
-lovart.ai
-openclaw.ai
-spicywriter.com
-gateway.ai.cloudflare.com
+DOMAIN-SUFFIX,grok.com,🤖 AI
+DOMAIN-SUFFIX,grok.x.ai,🤖 AI
+DOMAIN-SUFFIX,x.ai,🤖 AI
+DOMAIN-SUFFIX,api.x.ai,🤖 AI
 
-# Google / Gemini 相关
-gemini.google.com
-aistudio.google.com
-generativelanguage.googleapis.com
+DOMAIN-SUFFIX,groq.com,🤖 AI
+DOMAIN-SUFFIX,api.groq.com,🤖 AI
 
-# 补充常用 AI 域名
-github.com/copilot
-copilot.github.com
-windsurf.com
-elevenlabs.io
-liveperson.net
-manus.ai
-comfy.org
-cerebras.ai
-bytedance.ai
-youmind.ai
+DOMAIN-SUFFIX,perplexity.ai,🤖 AI
+DOMAIN-SUFFIX,api.perplexity.ai,🤖 AI
 
-# 规则结束
+DOMAIN-SUFFIX,mistral.ai,🤖 AI
+DOMAIN-SUFFIX,api.mistral.ai,🤖 AI
+
+DOMAIN-SUFFIX,meta.ai,🤖 AI
+DOMAIN-SUFFIX,cohere.ai,🤖 AI
+DOMAIN-SUFFIX,cohere.com,🤖 AI
+DOMAIN-SUFFIX,huggingface.co,🤖 AI
+
+DOMAIN-SUFFIX,copilot.microsoft.com,🤖 AI
+DOMAIN-SUFFIX,github.com,🤖 AI
+DOMAIN-SUFFIX,copilot.github.com,🤖 AI
+
+DOMAIN-SUFFIX,cursor.com,🤖 AI
+DOMAIN-SUFFIX,cursor.sh,🤖 AI
+DOMAIN-SUFFIX,poe.com,🤖 AI
+DOMAIN-SUFFIX,you.com,🤖 AI
+
+DOMAIN-SUFFIX,devin.ai,🤖 AI
+DOMAIN-SUFFIX,dify.ai,🤖 AI
+DOMAIN-SUFFIX,openrouter.ai,🤖 AI
+DOMAIN-SUFFIX,openart.ai,🤖 AI
+DOMAIN-SUFFIX,clipdrop.co,🤖 AI
+DOMAIN-SUFFIX,jasper.ai,🤖 AI
+DOMAIN-SUFFIX,coderabbit.ai,🤖 AI
+DOMAIN-SUFFIX,coderabbit.gallery.vsassets.io,🤖 AI
+
+DOMAIN-SUFFIX,chutes.ai,🤖 AI
+DOMAIN-SUFFIX,clawhub.ai,🤖 AI
+DOMAIN-SUFFIX,diabrowser.com,🤖 AI
+DOMAIN-SUFFIX,diabrowser.engineering,🤖 AI
+DOMAIN-SUFFIX,duck.ai,🤖 AI
+DOMAIN-SUFFIX,h2o.ai,🤖 AI
+DOMAIN-SUFFIX,kiro.dev,🤖 AI
+DOMAIN-SUFFIX,lovart.ai,🤖 AI
+DOMAIN-SUFFIX,openclaw.ai,🤖 AI
+DOMAIN-SUFFIX,spicywriter.com,🤖 AI
+DOMAIN-SUFFIX,gateway.ai.cloudflare.com,🤖 AI
+
+DOMAIN-SUFFIX,gemini.google.com,🤖 AI
+DOMAIN-SUFFIX,aistudio.google.com,🤖 AI
+DOMAIN-SUFFIX,generativelanguage.googleapis.com,🤖 AI
+
+DOMAIN-SUFFIX,elevenlabs.io,🤖 AI
+DOMAIN-SUFFIX,liveperson.net,🤖 AI
+DOMAIN-SUFFIX,manus.ai,🤖 AI
+DOMAIN-SUFFIX,comfy.org,🤖 AI
+DOMAIN-SUFFIX,cerebras.ai,🤖 AI
+DOMAIN-SUFFIX,windsurf.com,🤖 AI
+DOMAIN-SUFFIX,youmind.ai,🤖 AI
+
+# 额外常用 AI 相关域名（可根据需要增删）
+DOMAIN-SUFFIX,tcr9i.chat.openai.com,🤖 AI
