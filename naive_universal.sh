@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# NaiveProxy Universal Installer (Interactive Version)
+# NaiveProxy Universal Installer V3 (Optimized & Interactive)
 # Author: Manus
-# Features: Interactive input with defaults, Auto SSL/Self-signed, Systemd support, Subscription link
+# Features: Forced Domain Input, Auto IP Forwarding, BBR, Smart SSL, Subscription Link
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -10,7 +10,7 @@ YELLOW='\033[0;33m'
 NC='\033[0m'
 
 echo -e "${GREEN}========================================${NC}"
-echo -e "${GREEN}   NaiveProxy Universal Installer      ${NC}"
+echo -e "${GREEN}   NaiveProxy Universal Installer V3   ${NC}"
 echo -e "${GREEN}========================================${NC}"
 
 # 1. Root Check
@@ -19,9 +19,16 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-# 2. Interactive Inputs with Defaults
-read -p "Enter your Domain (default: bv.672048.xyz): " DOMAIN
-DOMAIN=${DOMAIN:-bv.672048.xyz}
+# 2. Interactive Inputs
+# Domain is now mandatory
+while true; do
+    read -p "Enter your Domain (Mandatory): " DOMAIN
+    if [ -z "$DOMAIN" ]; then
+        echo -e "${RED}Error: Domain cannot be empty!${NC}"
+    else
+        break
+    fi
+done
 
 read -p "Enter Port (default: 443): " PORT
 PORT=${PORT:-443}
@@ -32,18 +39,22 @@ USERNAME=${USERNAME:-user}
 read -p "Enter Password (default: pass123456): " PASSWORD
 PASSWORD=${PASSWORD:-pass123456}
 
-echo -e "\n${YELLOW}Configuration Summary:${NC}"
-echo -e "Domain: $DOMAIN"
-echo -e "Port: $PORT"
-echo -e "User: $USERNAME"
-echo -e "Pass: $PASSWORD"
-echo -e "----------------------------------------"
+# 3. System Optimization
+echo -e "${GREEN}Optimizing system network settings...${NC}"
+if ! grep -q "net.ipv4.ip_forward=1" /etc/sysctl.conf; then
+    echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf
+fi
+if ! grep -q "net.core.default_qdisc=fq" /etc/sysctl.conf; then
+    echo "net.core.default_qdisc=fq" >> /etc/sysctl.conf
+    echo "net.ipv4.tcp_congestion_control=bbr" >> /etc/sysctl.conf
+fi
+sysctl -p > /dev/null 2>&1
 
-# 3. Install Dependencies
+# 4. Install Dependencies
 echo -e "${GREEN}Installing dependencies...${NC}"
-apt update && apt install -y wget tar xz-utils curl jq ss-utils net-tools 2>/dev/null || apt install -y wget tar xz-utils curl jq
+apt update && apt install -y wget tar xz-utils curl jq 2>/dev/null
 
-# 4. Download Caddy with NaiveProxy
+# 5. Download Caddy with NaiveProxy
 echo -e "${GREEN}Downloading Caddy with NaiveProxy module...${NC}"
 CADDY_URL="https://github.com/klzgrad/forwardproxy/releases/download/v2.10.0-naive/caddy-forwardproxy-naive.tar.xz"
 wget -O caddy-naive.tar.xz $CADDY_URL
@@ -52,35 +63,34 @@ mv caddy-forwardproxy-naive/caddy /usr/bin/caddy
 chmod +x /usr/bin/caddy
 rm -rf caddy-forwardproxy-naive caddy-naive.tar.xz
 
-# 5. SSL Logic & Port Detection
+# 6. SSL Logic & Port Detection
 SSL_CONFIG="tls internal"
 INSECURE="1"
 
-# Check if port 80 and 443 are free for Let's Encrypt
-PORT_80_FREE=$(ss -tulpn | grep -E ":80 " > /dev/null; echo $?)
-PORT_443_FREE=$(ss -tulpn | grep -E ":443 " > /dev/null; echo $?)
-
-if [ "$PORT" == "443" ] && [ "$PORT_80_FREE" -ne 0 ] && [ "$PORT_443_FREE" -ne 0 ]; then
-    echo -e "${GREEN}Port 443/80 available. Using Let's Encrypt SSL.${NC}"
-    SSL_CONFIG="tls admin@$DOMAIN"
-    INSECURE="0"
+if [ "$PORT" == "443" ]; then
+    OCCUPIED=$(ss -tulpn | grep -E ":80 |:443 " | grep -v "caddy" > /dev/null; echo $?)
+    if [ "$OCCUPIED" -ne 0 ]; then
+        echo -e "${GREEN}Port 443 is standard. Using Let's Encrypt SSL.${NC}"
+        SSL_CONFIG="tls admin@$DOMAIN"
+        INSECURE="0"
+    else
+        echo -e "${YELLOW}Port 80/443 occupied. Using Self-signed.${NC}"
+    fi
 else
-    echo -e "${YELLOW}Using Self-signed certificate (Port 80/443 occupied or non-standard port used).${NC}"
-    SSL_CONFIG="tls internal"
-    INSECURE="1"
+    echo -e "${YELLOW}Non-standard port $PORT. Using Self-signed.${NC}"
 fi
 
-# 6. Setup Fake Site
+# 7. Setup Fake Site
 mkdir -p /var/www/html
 echo "<html><head><title>Welcome</title></head><body><h1>Site Under Construction</h1><p>Powered by Caddy</p></body></html>" > /var/www/html/index.html
 
-# 7. Create Caddyfile
+# 8. Create Caddyfile
 mkdir -p /etc/caddy
 cat > /etc/caddy/Caddyfile <<EOF
 {
     order forward_proxy before file_server
 }
-$DOMAIN:$PORT {
+:$PORT, $DOMAIN:$PORT {
     $SSL_CONFIG
     forward_proxy {
         basic_auth $USERNAME $PASSWORD
@@ -94,7 +104,7 @@ $DOMAIN:$PORT {
 }
 EOF
 
-# 8. Create Systemd Service
+# 9. Create Systemd Service
 cat > /etc/systemd/system/caddy.service <<EOF
 [Unit]
 Description=Caddy NaiveProxy Service
@@ -115,13 +125,13 @@ LimitNOFILE=1048576
 WantedBy=multi-user.target
 EOF
 
-# 9. Start Service
+# 10. Start Service
 echo -e "${GREEN}Starting service...${NC}"
 systemctl daemon-reload
 systemctl enable caddy
 systemctl restart caddy
 
-# 10. Final Output & Subscription Link
+# 11. Final Output
 echo -e "\n${GREEN}========================================${NC}"
 echo -e "${GREEN}      Installation Successful!          ${NC}"
 echo -e "${GREEN}========================================${NC}"
@@ -131,9 +141,8 @@ echo -e "User: $USERNAME"
 echo -e "Pass: $PASSWORD"
 echo -e "SSL: $([[ "$INSECURE" == "1" ]] && echo "Self-signed (Insecure)" || echo "Official (Secure)")"
 
-# Generate URL
 SUB_LINK="naive+https://$USERNAME:$PASSWORD@$DOMAIN:$PORT?insecure=$INSECURE#$DOMAIN"
 
-echo -e "\n${YELLOW}Your Subscription Link (Copy to Client):${NC}"
+echo -e "\n${YELLOW}Your Subscription Link:${NC}"
 echo -e "${GREEN}$SUB_LINK${NC}"
 echo -e "${GREEN}========================================${NC}"
