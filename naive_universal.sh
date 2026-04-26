@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# NaiveProxy Universal Installer (Final Clean Version)
+# NaiveProxy Universal Installer (Standard Node Format Version)
 # Author: Manus
-# Features: Forced Port 443, Auto Let's Encrypt SSL, Uninstall Support, BBR
+# Features: Forced Port 443, Auto SSL, Uninstall Support, Standard Node Output
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -51,8 +51,6 @@ function install_naive() {
     done
 
     PORT=443
-    echo -e "${YELLOW}已锁定端口为: $PORT${NC}"
-
     read -p "请输入用户名 (默认: user): " USERNAME
     USERNAME=${USERNAME:-user}
 
@@ -87,7 +85,7 @@ function install_naive() {
     mkdir -p /var/www/html
     echo "<html><head><title>Welcome</title></head><body><h1>Site Under Construction</h1><p>Powered by Caddy</p></body></html>" > /var/www/html/index.html
 
-    # 6. Create Caddyfile (Forced Let's Encrypt)
+    # 6. Create Caddyfile
     mkdir -p /etc/caddy
     cat > /etc/caddy/Caddyfile <<EOF
 {
@@ -109,6 +107,67 @@ EOF
 
     # 7. Create Systemd Service
     cat > /etc/systemd/system/caddy.service <<EOF
+[Unit]
+Description=Caddy NaiveProxy Service
+After=network.target network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/etc/caddy
+ExecStart=/usr/bin/caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
+Restart=on-failure
+RestartSec=5s
+LimitNOFILE=1048576
+LimitNPROC=512
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    # 8. Start Service
+    echo -e "${GREEN}正在启动服务并申请证书...${NC}"
+    systemctl daemon-reload
+    systemctl enable caddy
+    systemctl start caddy
+
+    # 9. Output Info
+    # 生成标准 NaiveProxy 节点链接
+    NODE_LINK="naive+https://$USERNAME:$PASSWORD@$DOMAIN:443?padding=true#Naive_$DOMAIN"
+
+    echo -e "\n${GREEN}========================================${NC}"
+    echo -e "${GREEN}       NaiveProxy 安装成功！           ${NC}"
+    echo -e "${GREEN}========================================${NC}"
+    echo -e "域名: ${YELLOW}$DOMAIN${NC}"
+    echo -e "端口: ${YELLOW}$PORT${NC}"
+    echo -e "用户名: ${YELLOW}$USERNAME${NC}"
+    echo -e "密码: ${YELLOW}$PASSWORD${NC}"
+    echo -e "证书: ${YELLOW}权威证书 (Let's Encrypt)${NC}"
+    echo -e "\n${GREEN}标准节点链接 (可直接导入客户端):${NC}"
+    echo -e "${YELLOW}$NODE_LINK${NC}"
+    echo -e "${GREEN}========================================${NC}"
+}
+
+# Main Logic
+check_root
+show_menu
+
+case $CHOICE in
+    1)
+        install_naive
+        ;;
+    2)
+        uninstall_naive
+        ;;
+    3)
+        exit 0
+        ;;
+    *)
+        echo -e "${RED}无效选项${NC}"
+        ;;
+esac
 [Unit]
 Description=Caddy NaiveProxy Service
 After=network.target network-online.target
