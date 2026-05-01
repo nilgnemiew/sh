@@ -11,6 +11,8 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m'
 
+CUSTOM_NAME="SingBox"
+
 ### root 检查
 check_root() {
   [ "$EUID" -ne 0 ] && echo -e "${RED}请使用 root 执行${NC}" && exit 1
@@ -65,9 +67,11 @@ check_port() {
 install_all() {
   read -p "Hysteria2 端口 [默认 443]: " HY_PORT
   read -p "VLESS Reality 端口 [默认 8443]: " VL_PORT
+  read -p "自定义节点名称 [默认 SingBox]: " INPUT_NAME
 
   HY_PORT=${HY_PORT:-443}
   VL_PORT=${VL_PORT:-8443}
+  CUSTOM_NAME=${INPUT_NAME:-SingBox}
 
   echo -e "\n${GREEN}设置 Reality 伪装域名 (SNI):${NC}"
   read -p "请输入域名 (直接回车默认使用 www.microsoft.com): " INPUT_DOMAIN
@@ -171,6 +175,7 @@ modify_config() {
   echo "Reality 伪装域名 (SNI): $DOMAIN_CUR"
   echo "Hysteria2 密码: $PASS_CUR"
   echo "VLESS UUID: $UUID_CUR"
+  echo "自定义节点名称: $CUSTOM_NAME"
   echo
 
   read -p "是否直接使用编辑器 (nano) 修改配置文件? [y/N]: " use_editor
@@ -186,10 +191,13 @@ modify_config() {
   read -p "Hysteria2 端口 [默认 $HY_CUR]: " NEW_HY
   read -p "VLESS Reality 端口 [默认 $VL_CUR]: " NEW_VL
   read -p "Reality 伪装域名 (SNI) [默认 $DOMAIN_CUR]: " NEW_DOMAIN
+  read -p "自定义节点名称 [默认 $CUSTOM_NAME]: " NEW_NAME
 
   NEW_HY=${NEW_HY:-$HY_CUR}
   NEW_VL=${NEW_VL:-$VL_CUR}
   NEW_DOMAIN=${NEW_DOMAIN:-$DOMAIN_CUR}
+  NEW_NAME=${NEW_NAME:-$CUSTOM_NAME}
+  CUSTOM_NAME=$NEW_NAME
 
   # 如果更改端口，则检查端口占用（允许当前端口）
   if [ "$NEW_HY" != "$HY_CUR" ]; then
@@ -247,19 +255,9 @@ EOF
   show_nodes
 }
 
-### 获取地区和服务商
-get_info() {
-  # --connect-timeout 限制连接时间，--retry 失败自动重试 2 次
-  local info=$(curl -s --connect-timeout 5 --retry 2 http://ip-api.com/json/?fields=countryCode,isp)
-  
-  REGION=$(echo "$info" | jq -r '.countryCode // "UN"')
-  ISP=$(echo "$info" | jq -r '.isp // "Unknown"' | tr ' ' '_')
-}
-
 ### 输出节点
 show_nodes() {
   IP=$(curl -s ipv4.ip.sb)
-  get_info # 获取最新的地区和 ISP 信息
 
   HY_PORT=$(jq '.inbounds[]|select(.tag=="hy2")|.listen_port' $SB_CONFIG)
   VL_PORT=$(jq '.inbounds[]|select(.tag=="reality")|.listen_port' $SB_CONFIG)
@@ -275,10 +273,10 @@ show_nodes() {
   echo -e "${GREEN}===== 节点配置已生成 =====${NC}"
   echo
   echo -e "Hysteria2 (高速模式):"
-  echo "hy2://$PASS@$IP:$HY_PORT/?insecure=1&alpn=h3#${REGION}-${ISP}"
+  echo "hy2://$PASS@$IP:$HY_PORT/?insecure=1&alpn=h3#$CUSTOM_NAME"
   echo
   echo -e "VLESS Reality (稳健模式):"
-  echo "vless://$UUID@$IP:$VL_PORT?encryption=none&flow=xtls-rprx-vision&security=reality&sni=$DOMAIN&fp=chrome&pbk=$PUB_KEY&sid=$SID&type=tcp#${REGION}-${ISP}"
+  echo "vless://$UUID@$IP:$VL_PORT?encryption=none&flow=xtls-rprx-vision&security=reality&sni=$DOMAIN&fp=chrome&pbk=$PUB_KEY&sid=$SID&type=tcp#$CUSTOM_NAME"
   echo
 }
 
