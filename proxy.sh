@@ -282,29 +282,33 @@ show_nodes() {
 
 ### 菜单
 menu() {
-  clear
-  echo "========== sing-box 管理面板 =========="
-  echo "1. 安装"
-  echo "2. 查看节点信息"
-  echo "3. 运行状态"
-  echo "4. 实时日志"
-  echo "5. 重启服务"
-  echo "6. 彻底卸载"
-  echo "7. 修改配置"
-  echo "0. 退出"
-  read -p "请选择 [0-7]: " num
+  while true; do
+    clear
+    echo "========== sing-box 管理面板 =========="
+    echo "1. 安装"
+    echo "2. 查看节点信息"
+    echo "3. 运行状态"
+    echo "4. 实时日志"
+    echo "5. 重启服务"
+    echo "6. 彻底卸载"
+    echo "7. 修改配置"
+    echo "0. 退出"
+    read -p "请选择 [0-7]: " num
 
-  case $num in
-    1) install_deps; install_singbox; enable_bbr; install_all ;;
-    2) [ -f "$SB_CONFIG" ] && show_nodes || echo "请先安装" ;;
-    3) systemctl status sing-box ;;
-    4) journalctl -u sing-box -f ;;
-    5) systemctl restart sing-box ;;
-    6) systemctl stop sing-box; rm -rf $SB_DIR $SERVICE_FILE; echo "已卸载" ;;
-    7) modify_config ;;
-    0) exit ;;
-    *) echo "无效选择" ;;
-  esac
+    case $num in
+      1) install_deps; install_singbox; enable_bbr; install_all ;;
+      2) [ -f "$SB_CONFIG" ] && show_nodes || echo "请先安装" ;;
+      3) systemctl status sing-box ;;
+      4) journalctl -u sing-box -f ;;
+      5) systemctl restart sing-box ;;
+      6) systemctl stop sing-box; rm -rf $SB_DIR $SERVICE_FILE; echo "已卸载" ;;
+      7) modify_config ;;
+      0) exit ;;
+      *) echo "无效选择" ;;
+    esac
+    
+    [ "$num" != "0" ] && read -p "按 Enter 继续..." && continue
+  done
 }
 
 check_root
