@@ -13,6 +13,13 @@ NC='\033[0m'
 
 CUSTOM_NAME="SingBox"
 
+### 固定配置值
+FIXED_HY2_PASS="cc4b969259d0eb84"
+FIXED_VLESS_UUID="93be88a8-1880-4359-90af-fd2d266a9863"
+FIXED_REALITY_SHORTID="b631f62d"
+FIXED_REALITY_PUBKEY="y4_s_qNaoQdxwD91KAZOHlpLcJpaSy0RBVflQv4-Zlw"
+FIXED_REALITY_PRIVKEY="SNpaGKzmrS131QIPhl92ato75liiD2_a12EomxDBz3U"
+
 ### root 检查
 check_root() {
   [ "$EUID" -ne 0 ] && echo -e "${RED}请使用 root 执行${NC}" && exit 1
@@ -53,7 +60,13 @@ gen_cert() {
 
 ### 生成 Reality 密钥
 gen_reality_key() {
-  if [ ! -f "$KEY_FILE" ]; then
+  mkdir -p "$SB_DIR"
+  if [ -n "$FIXED_REALITY_PRIVKEY" ] && [ -n "$FIXED_REALITY_PUBKEY" ]; then
+    cat > "$KEY_FILE" <<EOF
+PrivateKey: $FIXED_REALITY_PRIVKEY
+PublicKey: $FIXED_REALITY_PUBKEY
+EOF
+  elif [ ! -f "$KEY_FILE" ]; then
     sing-box generate reality-keypair > "$KEY_FILE"
   fi
 }
@@ -80,9 +93,9 @@ install_all() {
   check_port $HY_PORT || { echo -e "${RED}端口 $HY_PORT 被占用${NC}"; return; }
   check_port $VL_PORT || { echo -e "${RED}端口 $VL_PORT 被占用${NC}"; return; }
 
-  UUID=$(sing-box generate uuid)
-  PASS=$(openssl rand -hex 8)
-  SID=$(openssl rand -hex 4) 
+  UUID="$FIXED_VLESS_UUID"
+  PASS="$FIXED_HY2_PASS"
+  SID="$FIXED_REALITY_SHORTID"
 
   gen_cert
   gen_reality_key
@@ -162,10 +175,10 @@ modify_config() {
   HY_CUR=$(jq '.inbounds[]|select(.tag=="hy2")|.listen_port' $SB_CONFIG)
   VL_CUR=$(jq '.inbounds[]|select(.tag=="reality")|.listen_port' $SB_CONFIG)
   DOMAIN_CUR=$(jq -r '.inbounds[]|select(.tag=="reality")|.tls.server_name' $SB_CONFIG)
-  PASS_CUR=$(jq -r '.inbounds[]|select(.tag=="hy2")|.users[0].password' $SB_CONFIG)
-  UUID_CUR=$(jq -r '.inbounds[]|select(.tag=="reality")|.users[0].uuid' $SB_CONFIG)
-  SID_CUR=$(jq -r '.inbounds[]|select(.tag=="reality")|.tls.reality.short_id[0]' $SB_CONFIG)
-  [ -f "$KEY_FILE" ] || gen_reality_key
+  PASS_CUR="$FIXED_HY2_PASS"
+  UUID_CUR="$FIXED_VLESS_UUID"
+  SID_CUR="$FIXED_REALITY_SHORTID"
+  gen_reality_key
   PRIV_KEY=$(awk '/PrivateKey/ {print $2}' "$KEY_FILE")
 
   echo
@@ -181,6 +194,18 @@ modify_config() {
   read -p "是否直接使用编辑器 (nano) 修改配置文件? [y/N]: " use_editor
   if [[ "$use_editor" =~ ^[Yy]$ ]]; then
     ${EDITOR:-nano} "$SB_CONFIG"
+    tmp_file=$(mktemp)
+    jq \
+      --arg pass "$FIXED_HY2_PASS" \
+      --arg uuid "$FIXED_VLESS_UUID" \
+      --arg sid "$FIXED_REALITY_SHORTID" \
+      --arg priv "$FIXED_REALITY_PRIVKEY" \
+      '
+      (.inbounds[]|select(.tag=="hy2")|.users[0].password)=$pass |
+      (.inbounds[]|select(.tag=="reality")|.users[0].uuid)=$uuid |
+      (.inbounds[]|select(.tag=="reality")|.tls.reality.short_id)=[$sid] |
+      (.inbounds[]|select(.tag=="reality")|.tls.reality.private_key)=$priv
+      ' "$SB_CONFIG" > "$tmp_file" && mv "$tmp_file" "$SB_CONFIG"
     systemctl restart sing-box
     echo -e "${GREEN}配置已保存并重启服务${NC}"
     show_nodes
