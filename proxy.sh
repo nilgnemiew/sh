@@ -13,6 +13,14 @@ NC='\033[0m'
 
 CUSTOM_NAME="SingBox"
 
+### 固定配置值（Reality 和 Hysteria2）
+FIXED_VLESS_UUID="93be88a8-1880-4359-90af-fd2d266a9863"
+FIXED_HY2_PASS="cc4b969259d0eb84"
+FIXED_REALITY_SHORTID="b631f62d"
+FIXED_REALITY_PUBKEY="y4_s_qNaoQdxwD91KAZOHlpLcJpaSy0RBVflQv4-Zlw"
+# 对应的私钥需要从原始密钥对中获取，或在首次运行时生成并保存
+FIXED_REALITY_PRIVKEY=""
+
 ### root 检查
 check_root() {
   [ "$EUID" -ne 0 ] && echo -e "${RED}请使用 root 执行${NC}" && exit 1
@@ -51,10 +59,25 @@ gen_cert() {
     -subj "/C=US/O=SingBox/CN=SingBox"
 }
 
-### 生成 Reality 密钥
+### 生成 Reality 密钥或使用固定密钥
 gen_reality_key() {
-  if [ ! -f "$KEY_FILE" ]; then
+  mkdir -p "$SB_DIR"
+  
+  # 如果已指定固定私钥，直接写入
+  if [ -n "$FIXED_REALITY_PRIVKEY" ]; then
+    if [ ! -f "$KEY_FILE" ] || ! grep -q "PrivateKey: $FIXED_REALITY_PRIVKEY" "$KEY_FILE"; then
+      cat > "$KEY_FILE" <<EOF
+PrivateKey: $FIXED_REALITY_PRIVKEY
+PublicKey: $FIXED_REALITY_PUBKEY
+EOF
+    fi
+  elif [ ! -f "$KEY_FILE" ]; then
+    # 生成新密钥对并保存
     sing-box generate reality-keypair > "$KEY_FILE"
+    # 提取并显示生成的公钥（方便记录）
+    GENERATED_PUBKEY=$(awk '/PublicKey/ {print $2}' "$KEY_FILE")
+    echo -e "${GREEN}已生成新的 Reality 密钥对${NC}"
+    echo -e "${GREEN}公钥: $GENERATED_PUBKEY${NC}"
   fi
 }
 
@@ -80,9 +103,10 @@ install_all() {
   check_port $HY_PORT || { echo -e "${RED}端口 $HY_PORT 被占用${NC}"; return; }
   check_port $VL_PORT || { echo -e "${RED}端口 $VL_PORT 被占用${NC}"; return; }
 
-  UUID=$(sing-box generate uuid)
-  PASS=$(openssl rand -hex 8)
-  SID=$(openssl rand -hex 4) 
+  # 使用固定值
+  UUID="$FIXED_VLESS_UUID"
+  PASS="$FIXED_HY2_PASS"
+  SID="$FIXED_REALITY_SHORTID"
 
   gen_cert
   gen_reality_key
