@@ -216,7 +216,7 @@ modify_config() {
       echo -e "${RED}配置校验失败，已取消保存${NC}"
       return
     fi
-    [ -s "$tmp_file" ] || { rm -f "$tmp_file"; echo -e "${RED}配置文件为空，已取消保存${NC}"; return; }
+    [ -s "$tmp_file" ] || { rm -f "$tmp_file"; echo -e "${RED}生成的配置无效，已取消保存${NC}"; return; }
     mv "$tmp_file" "$SB_CONFIG"
     systemctl restart sing-box
     echo -e "${GREEN}配置已保存并重启服务${NC}"
