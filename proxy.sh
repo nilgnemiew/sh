@@ -18,8 +18,7 @@ FIXED_VLESS_UUID="93be88a8-1880-4359-90af-fd2d266a9863"
 FIXED_HY2_PASS="cc4b969259d0eb84"
 FIXED_REALITY_SHORTID="b631f62d"
 FIXED_REALITY_PUBKEY="y4_s_qNaoQdxwD91KAZOHlpLcJpaSy0RBVflQv4-Zlw"
-# 对应的私钥需要从原始密钥对中获取，或在首次运行时生成并保存
-FIXED_REALITY_PRIVKEY=""
+FIXED_REALITY_PRIVKEY="SNpaGKzmrS131QIPhl92ato75liiD2_a12EomxDBz3U"
 
 ### root 检查
 check_root() {
@@ -59,25 +58,17 @@ gen_cert() {
     -subj "/C=US/O=SingBox/CN=SingBox"
 }
 
-### 生成 Reality 密钥或使用固定密钥
+### 生成或写入固定 Reality 密钥
 gen_reality_key() {
   mkdir -p "$SB_DIR"
   
-  # 如果已指定固定私钥，直接写入
-  if [ -n "$FIXED_REALITY_PRIVKEY" ]; then
-    if [ ! -f "$KEY_FILE" ] || ! grep -q "PrivateKey: $FIXED_REALITY_PRIVKEY" "$KEY_FILE"; then
-      cat > "$KEY_FILE" <<EOF
+  if [ ! -f "$KEY_FILE" ]; then
+    echo -e "${GREEN}写入固定 Reality 密钥对...${NC}"
+    cat > "$KEY_FILE" <<EOF
 PrivateKey: $FIXED_REALITY_PRIVKEY
 PublicKey: $FIXED_REALITY_PUBKEY
 EOF
-    fi
-  elif [ ! -f "$KEY_FILE" ]; then
-    # 生成新密钥对并保存
-    sing-box generate reality-keypair > "$KEY_FILE"
-    # 提取并显示生成的公钥（方便记录）
-    GENERATED_PUBKEY=$(awk '/PublicKey/ {print $2}' "$KEY_FILE")
-    echo -e "${GREEN}已生成新的 Reality 密钥对${NC}"
-    echo -e "${GREEN}公钥: $GENERATED_PUBKEY${NC}"
+    chmod 600 "$KEY_FILE"
   fi
 }
 
@@ -111,7 +102,7 @@ install_all() {
   gen_cert
   gen_reality_key
 
-  PRIV_KEY=$(awk '/PrivateKey/ {print $2}' "$KEY_FILE")
+  PRIV_KEY="$FIXED_REALITY_PRIVKEY"
 
   mkdir -p "$SB_DIR"
 
@@ -197,8 +188,9 @@ modify_config() {
   echo "Hysteria2 端口: $HY_CUR"
   echo "VLESS Reality 端口: $VL_CUR"
   echo "Reality 伪装域名 (SNI): $DOMAIN_CUR"
-  echo "Hysteria2 密码: $PASS_CUR"
-  echo "VLESS UUID: $UUID_CUR"
+  echo "Hysteria2 密码: $PASS_CUR （固定）"
+  echo "VLESS UUID: $UUID_CUR （固定）"
+  echo "Reality ShortID: $SID_CUR （固定）"
   echo "自定义节点名称: $CUSTOM_NAME"
   echo
 
@@ -291,7 +283,7 @@ show_nodes() {
 
   DOMAIN=$(jq -r '.inbounds[]|select(.tag=="reality")|.tls.server_name' $SB_CONFIG)
   SID=$(jq -r '.inbounds[]|select(.tag=="reality")|.tls.reality.short_id[0]' $SB_CONFIG)
-  PUB_KEY=$(awk '/PublicKey/ {print $2}' "$KEY_FILE")
+  PUB_KEY="$FIXED_REALITY_PUBKEY"
 
   echo
   echo -e "${GREEN}===== 节点配置已生成 =====${NC}"
