@@ -195,7 +195,12 @@ modify_config() {
   if [[ "$use_editor" =~ ^[Yy]$ ]]; then
     echo -e "${GREEN}提示: Hysteria2 密码、VLESS UUID、Reality ShortID 与公私钥为固定值，保存后会自动恢复为固定配置。${NC}"
     ${EDITOR:-nano} "$SB_CONFIG"
-    tmp_file=$(mktemp --mode=600) || { echo -e "${RED}创建临时文件失败${NC}"; return; }
+    old_umask=$(umask)
+    umask 077
+    tmp_file=$(mktemp)
+    mktemp_status=$?
+    umask "$old_umask"
+    [ $mktemp_status -eq 0 ] || { echo -e "${RED}创建临时文件失败${NC}"; return; }
     if ! jq \
       --arg pass "$FIXED_HY2_PASS" \
       --arg uuid "$FIXED_VLESS_UUID" \
@@ -211,7 +216,7 @@ modify_config() {
       echo -e "${RED}配置校验失败，已取消保存${NC}"
       return
     fi
-    [ -s "$tmp_file" ] || { rm -f "$tmp_file"; echo -e "${RED}配置生成失败，已取消保存${NC}"; return; }
+    [ -s "$tmp_file" ] || { rm -f "$tmp_file"; echo -e "${RED}配置文件为空，已取消保存${NC}"; return; }
     mv "$tmp_file" "$SB_CONFIG"
     systemctl restart sing-box
     echo -e "${GREEN}配置已保存并重启服务${NC}"
