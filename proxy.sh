@@ -195,8 +195,7 @@ modify_config() {
   if [[ "$use_editor" =~ ^[Yy]$ ]]; then
     echo -e "${GREEN}提示: Hysteria2 密码、VLESS UUID、Reality ShortID 与公私钥为固定值，保存后会自动恢复为固定配置。${NC}"
     ${EDITOR:-nano} "$SB_CONFIG"
-    tmp_file=$(mktemp)
-    chmod 600 "$tmp_file"
+    tmp_file=$(mktemp --mode=600)
     jq \
       --arg pass "$FIXED_HY2_PASS" \
       --arg uuid "$FIXED_VLESS_UUID" \
