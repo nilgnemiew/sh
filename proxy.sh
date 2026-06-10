@@ -252,11 +252,14 @@ show_nodes() {
 
   # 新增：计算自签名证书的 SHA256 指纹（严格按照您提供的 openssl 命令）
   # 用于 Hysteria2 的 pinSHA256 参数，实现证书固定验证（比 insecure=1 更安全）
+  # 采用更健壮的单管道提取方式（cut + tr），避免 grep 精确字符串匹配导致的解析失败
   FINGERPRINT=""
   if command -v openssl >/dev/null 2>&1 && [ -f "$CERT_DIR/server.crt" ]; then
-    FP_RAW=$(openssl x509 -in "$CERT_DIR/server.crt" -noout -fingerprint -sha256 2>/dev/null || true)
-    if echo "$FP_RAW" | grep -q "SHA256 Fingerprint="; then
-      FINGERPRINT=$(echo "$FP_RAW" | awk -F= '{print $2}' | tr -d ':' | tr 'A-F' 'a-f')
+    FINGERPRINT=$(openssl x509 -in "$CERT_DIR/server.crt" -noout -fingerprint -sha256 2>/dev/null | \
+      cut -d= -f2 | tr -d ':' | tr '[:upper:]' '[:lower:]' || true)
+    # 验证指纹有效性（SHA256 指纹应为 exactly 64 位十六进制字符）
+    if [ ${#FINGERPRINT} -ne 64 ] || ! [[ "$FINGERPRINT" =~ ^[0-9a-f]+$ ]]; then
+      FINGERPRINT=""
     fi
   fi
 
