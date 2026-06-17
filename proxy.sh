@@ -21,10 +21,10 @@ FIXED_REALITY_PUBKEY="y4_s_qNaoQdxwD91KAZOHlpLcJpaSy0RBVflQv4-Zlw"
 FIXED_REALITY_PRIVKEY="SNpaGKzmrS131QIPhl92ato75liiD2_a12EomxDBz3U"
 
 ### 默认值
+DEFAULT_REALITY_PORT=443
 DEFAULT_WS_LOCAL_PORT=8080
 DEFAULT_WS_PATH="/ws"
 
-### 全局变量
 ENABLE_REALITY=false
 ENABLE_ARGO=false
 
@@ -90,10 +90,10 @@ install_all() {
     echo -e "${RED}必须至少选择一个协议${NC}" && return 1
   fi
 
-  # 端口与域名配置
+  # Reality 配置（默认443）
   if $ENABLE_REALITY; then
-    read -p "VLESS Reality 端口 [默认 8443]: " VL_PORT
-    VL_PORT=${VL_PORT:-8443}
+    read -p "VLESS Reality 端口 [默认 $DEFAULT_REALITY_PORT]: " VL_PORT
+    VL_PORT=${VL_PORT:-$DEFAULT_REALITY_PORT}
     check_port $VL_PORT || { echo -e "${RED}端口 $VL_PORT 被占用${NC}"; return 1; }
 
     echo -e "\n${GREEN}设置 Reality 伪装域名 (SNI):${NC}"
@@ -101,6 +101,7 @@ install_all() {
     DOMAIN=${INPUT_DOMAIN:-www.microsoft.com}
   fi
 
+  # Argo 配置
   if $ENABLE_ARGO; then
     read -p "WS 本地监听端口 [默认 $DEFAULT_WS_LOCAL_PORT]: " WS_LOCAL_PORT
     read -p "WebSocket 路径 [默认 $DEFAULT_WS_PATH]: " WS_PATH
@@ -144,7 +145,7 @@ install_all() {
   fi
 
   if $ENABLE_ARGO; then
-    [ $ENABLE_REALITY = true ] && INBOUNDS+=","
+    [ "$ENABLE_REALITY" = true ] && INBOUNDS+=","
     INBOUNDS+='
     {
       "tag": "vless-ws-argo",
@@ -168,7 +169,7 @@ install_all() {
 }
 EOF
 
-  # 创建 systemd 服务
+  # systemd 服务
   cat > "$SERVICE_FILE" <<EOF
 [Unit]
 Description=Xray Service
@@ -194,7 +195,7 @@ EOF
       elif [ "$ARCH" = "aarch64" ]; then
         CF_URL="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64"
       else
-        echo -e "${RED}不支持的架构: $ARCH${NC}" && return 1
+        echo -e "${RED}不支持的架构${NC}" && return 1
       fi
       wget -q "$CF_URL" -O /usr/local/bin/cloudflared && chmod +x /usr/local/bin/cloudflared
     fi
@@ -213,8 +214,14 @@ WantedBy=multi-user.target
 EOF
     systemctl daemon-reload
     systemctl enable --now cloudflared-argo
-    sleep 8
-    ARGO_URL=$(journalctl -u cloudflared-argo --since "2 min ago" --no-pager | grep -o 'https://[^ ]*\.trycloudflare\.com' | tail -1)
+    sleep 10
+
+    # 获取 Argo 域名
+    for i in {1..5}; do
+      ARGO_URL=$(journalctl -u cloudflared-argo --since "30 sec ago" --no-pager | grep -o 'https://[^ ]*\.trycloudflare\.com' | tail -1)
+      [ -n "$ARGO_URL" ] && break
+      sleep 3
+    done
     if [ -n "$ARGO_URL" ]; then
       echo "$ARGO_URL" > "$ARGO_DOMAIN_FILE"
     else
@@ -222,20 +229,22 @@ EOF
     fi
   fi
 
-  echo -e "${GREEN}Xray 安装/配置完成！${NC}"
+  echo -e "${GREEN}✅ Xray 安装完成！${NC}"
+  echo -e "${YELLOW}排查命令：${NC}"
+  echo "systemctl status xray"
+  echo "ss -lntup | grep -E '443|8080'"
+  echo "journalctl -u xray -f"
   show_nodes
 }
 
 modify_config() {
   [ -f "$XB_CONFIG" ] || { echo -e "${RED}配置文件不存在${NC}"; return; }
-  echo -e "${YELLOW}推荐使用 nano 直接编辑配置文件${NC}"
+  echo -e "${YELLOW}推荐直接使用 nano 编辑配置文件${NC}"
   read -p "是否打开 nano 编辑? (y/N): " use_editor
   if [[ "$use_editor" =~ ^[Yy]$ ]]; then
     ${EDITOR:-nano} "$XB_CONFIG"
     systemctl restart xray
-    if $ENABLE_ARGO || systemctl is-active cloudflared-argo >/dev/null 2>&1; then
-      systemctl restart cloudflared-argo
-    fi
+    [ -f "$ARGO_SERVICE" ] && systemctl restart cloudflared-argo
     echo -e "${GREEN}配置已更新并重启${NC}"
   fi
   show_nodes
@@ -260,7 +269,7 @@ show_nodes() {
       echo -e "${GREEN}VLESS WS + Argo Quick Tunnel:${NC}"
       WS_PATH=$(jq -r '.inbounds[]|select(.tag=="vless-ws-argo")|.streamSettings.wsSettings.path' "$XB_CONFIG")
       echo "vless://$FIXED_VLESS_UUID@$ARGO_DOMAIN:443?encryption=none&security=tls&type=ws&host=$ARGO_DOMAIN&path=$WS_PATH#$CUSTOM_NAME-CDN"
-      echo -e "${YELLOW}提示：Argo 域名重启后可能变化，可通过日志查看最新域名${NC}\n"
+      echo -e "${YELLOW}提示：Argo 域名重启后可能变化，可通过 journalctl -u cloudflared-argo 查看最新域名${NC}\n"
     fi
   fi
 }
@@ -268,7 +277,7 @@ show_nodes() {
 menu() {
   while true; do
     clear
-    echo "========== Xray 可选协议管理面板 (无 Hysteria2) =========="
+    echo "========== Xray 管理面板 (Reality 默认443 | 无防火墙) =========="
     echo "1. 安装 / 重新安装"
     echo "2. 查看节点信息"
     echo "3. 运行状态"
@@ -283,12 +292,9 @@ menu() {
       2) show_nodes ;;
       3)
         echo "=== Xray ==="; systemctl status xray --no-pager
-        echo "=== cloudflared-argo ==="; systemctl status cloudflared-argo --no-pager 2>/dev/null || echo "Argo 未启用"
+        echo "=== cloudflared ==="; systemctl status cloudflared-argo --no-pager 2>/dev/null || echo "Argo 未启用"
         ;;
-      4)
-        echo "按 Ctrl+C 退出日志"
-        journalctl -u xray -u cloudflared-argo -f 2>/dev/null
-        ;;
+      4) journalctl -u xray -u cloudflared-argo -f ;;
       5)
         systemctl restart xray
         systemctl restart cloudflared-argo 2>/dev/null
