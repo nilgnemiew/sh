@@ -182,6 +182,8 @@ LimitNOFILE=51200
 WantedBy=multi-user.target
 EOF
 
+  # 清理可能存在的官方安装脚本生成的冲突配置
+  rm -rf /etc/systemd/system/xray.service.d
   systemctl daemon-reload
   systemctl enable --now xray
 
