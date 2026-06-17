@@ -232,10 +232,6 @@ EOF
   fi
 
   echo -e "${GREEN}✅ Xray 安装完成！${NC}"
-  echo -e "${YELLOW}排查命令：${NC}"
-  echo "systemctl status xray"
-  echo "ss -lntup | grep -E '443|8080'"
-  echo "journalctl -u xray -f"
   show_nodes
 }
 
