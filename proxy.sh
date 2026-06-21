@@ -97,8 +97,8 @@ install_all() {
     check_port $VL_PORT || { echo -e "${RED}端口 $VL_PORT 被占用${NC}"; return 1; }
 
     echo -e "\n${GREEN}设置 Reality 伪装域名 (SNI):${NC}"
-    read -p "请输入域名 (直接回车默认 www.microsoft.com): " INPUT_DOMAIN
-    DOMAIN=${INPUT_DOMAIN:-www.microsoft.com}
+    read -p "请输入域名 (直接回车默认 www.bing.com): " INPUT_DOMAIN
+    DOMAIN=${INPUT_DOMAIN:-www.bing.com}
   fi
 
   # Argo 配置
